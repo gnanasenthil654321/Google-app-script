@@ -1,3 +1,8 @@
+// The script actually takes all the threads in the inbox "totalInboxThreads()"
+// Checks if there are unread messages in any of those threads "unreadMails(inboxthreads)"
+// I do not know if this is good idea, but there is no direct method of finding the actuall threads that are unread.
+// These threads with unread messages are forwarded and the same are marked read. "function forwardMarkRead()"
+
 // function to get the number of threads that have unread messages in them.
 function InboxUnreadCount()
 {
