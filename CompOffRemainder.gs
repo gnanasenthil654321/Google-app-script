@@ -64,7 +64,7 @@ function expiry(year,month,day)
    month_expiry = (month_expiry % 12)
    var year_expiry = year + 1
  }  
- if (month_expiry <= 12) // if the expiry month falls in the same year
+ else // if the expiry month falls in the same year
  {
    var year_expiry = year
  }
