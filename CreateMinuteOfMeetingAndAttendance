@@ -1,0 +1,295 @@
+//run createMinuteOfMeetingAndAttendance
+
+function createFile1(){
+  var folder = DriveApp.getFolderById('0ByrroXF09PRHZnRaMEExSGtPaFU') // get the UniversityExam folder 0ByrroXF09PRHRVpZaDE0MjlycXM
+  var folderId = folder.getId();
+  Logger.log(1+2);
+  Logger.log(folderId);
+  
+  var date = new Date();
+  var file = DocumentApp.create("MinutesCumAttendance"+date.getFullYear()+(date.getMonth()+1)+date.getDay()+date.getMinutes());
+  Logger.log(file);
+  var fileId = DriveApp.getFileById(file.getId());
+  folder.addFile(fileId);
+  return file.getId();
+ }
+
+
+function getExamDates(){ // returns an array with two elements first element an array of dates in dd-mm-yyyy format and second element an array in dates of long format
+  var spreadsheet = SpreadsheetApp.openById("1dqngKjrX5r6CCnAYRXByTySScucZmyrGB80l1jL6aIQ");
+  var sheet =  spreadsheet.getSheetByName('UniversityFile');
+  var lastColumn = sheet.getLastColumn();
+  var datesLong = sheet.getRange(1, 2, 1, (lastColumn-1)).getValues(); // the dates are in the long format
+  var datesShort = []
+  
+  for (k = 0;k < datesLong[0].length;k++){
+      
+      var day = datesLong[0][k].getDate();
+      var month = (datesLong[0][k].getMonth())+1;
+      var year = datesLong[0][k].getYear();
+      
+      datesShort.push(day+"-"+month+"-"+year);
+      
+      
+    } 
+  //Logger.log(datesLong);
+  //Logger.log(datesShort);
+  var dates = []
+  
+  dates.push(datesShort);
+  dates.push(datesLong[0]);
+  //Logger.log(dates);
+  return dates; // return
+  
+}
+
+
+function getCandidatesOnEachDate(){ // returns an array containing the exam roll numbers of all the candidates on all days.
+  var spreadsheet = SpreadsheetApp.openById("1dqngKjrX5r6CCnAYRXByTySScucZmyrGB80l1jL6aIQ");
+  var sheet =  spreadsheet.getSheetByName('UniversityFile');
+  var lastColumn = sheet.getLastColumn();
+  var lastRow = sheet.getLastRow();
+  
+  var StudentsArray = [];
+  
+  for (k = 2;k <= lastColumn;k++){
+      
+    var studentsToday = sheet.getRange(2, k, lastRow - 1, 1).getValues();
+    
+    var students = [];
+    for (i = 0; i< studentsToday.length;i++){
+      if (studentsToday[i] != ""){
+        students.push(studentsToday[i][0]);
+      }
+      
+      
+      }
+     StudentsArray.push(students)
+     }
+  Logger.log(StudentsArray)
+  return StudentsArray
+} 
+  
+  
+function getExaminerDetails(){ // returns the details of all the examiners as a 2d array
+  var spreadsheet = SpreadsheetApp.openById("1dqngKjrX5r6CCnAYRXByTySScucZmyrGB80l1jL6aIQ");
+  var sheet =  spreadsheet.getSheetByName('Examiners');
+  
+  var lastColumn = sheet.getLastColumn();
+  var lastRow = sheet.getLastRow();
+  
+  var detailsOfAllExaminers = sheet.getRange(2, 1, lastRow-1, lastColumn).getValues();
+  return detailsOfAllExaminers;
+  
+  Logger.log(detailsOfAllExaminers);
+  
+  
+}
+
+
+function createMinuteOfMeetingCumAttendance(){
+  var doc = DocumentApp.openById(createFile1());
+  var spreadsheet = SpreadsheetApp.openById("1dqngKjrX5r6CCnAYRXByTySScucZmyrGB80l1jL6aIQ");
+  var sheet =  spreadsheet.getSheetByName('UniversityFile');
+  
+  var name = doc.getName();
+  var body = doc.getBody();
+  
+  body.setMarginTop(20);
+  body.setMarginBottom(20);
+  
+  
+  var months = ["January","February","March","April","May","June","July","August","September","October","November","December"]
+  var examDates = getExamDates()[0];
+  var examDates1 = getExamDates()[1];
+  var candidates = getCandidatesOnEachDate();
+  
+  
+  var heading1 = body.appendParagraph((months[examDates1[0].getMonth()]+" "+examDates1[0].getFullYear()+" Examinations \n"));
+  heading1.setHeading((DocumentApp.ParagraphHeading.HEADING1));
+  heading1.setAlignment(DocumentApp.HorizontalAlignment.CENTER);
+  
+  var par1 = body.appendParagraph("Examination \t:\t FIRST MBBS (PRACTICAL AND ORAL) \n"+"Subject \t:\t Physiology \n"+"Center \t:\t KAPV Govt. Medical College, Tiruchirapalli");
+  
+  var heading2 = body.appendParagraph("Minutes Of The Meeting");
+  heading2.setHeading((DocumentApp.ParagraphHeading.HEADING2));
+  heading2.setAlignment(DocumentApp.HorizontalAlignment.CENTER);
+  
+  var par2 = body.appendParagraph("The Board meeting of Examiners of Physiology (Practical and Viva examinations) conducted on "+examDates[examDates.length - 1]+" at 4.00 pm at the Chamber of Professor of Physiology and Convener of the Board I year MBBS, K. A. P. Viswanatham Government Medical College, Tiruchirapalli. As per the Tamil Nadu Dr. MGR Medical University, Chennai, I year MBBS Clinical and Oral Examinations were conducted. The mark sheets were duly signed by the board of examiners are herewith enclosed.")
+  par2.setAlignment(DocumentApp.HorizontalAlignment.JUSTIFY);
+  
+  var summaryCells = [["Date","No. Of Candidates","No. Present","No. Absent"]]
+  
+  for (i=0;i<examDates.length;i++){
+    var row = [];
+    row.push(examDates[i]);
+    row.push(candidates[i].length);
+    row.push("");
+    row.push("");
+    summaryCells.push(row);
+       }
+  
+  var table1 = body.appendTable(summaryCells);
+  
+  var examiners = getExaminerDetails();
+  
+  for(i=0;i<examiners.length;i++){
+    if (i==0){// to print "Convernor"
+      var par3 = body.appendParagraph("Convenor: \r");
+      par3.setHeading(DocumentApp.ParagraphHeading.HEADING3).setSpacingAfter(0);
+      
+    }
+    if (i==1){// to print "Members"
+      var par4 = body.appendParagraph("Members: \r");
+      par4.setHeading(DocumentApp.ParagraphHeading.HEADING3);
+    }
+    for(j=0;j<examiners[i].length;j++){
+      body.appendParagraph(examiners[i][j]);
+      }
+    body.appendParagraph("\r").setSpacingAfter(0);
+    } 
+  
+  body.appendPageBreak();
+ 
+  // attendance certificates
+  
+  for(i=1;i<examiners.length;i++){
+    body.appendParagraph("KAPV Govt. Medical College, Tiruchirapalli").setHeading(DocumentApp.ParagraphHeading.HEADING1).setAlignment(DocumentApp.HorizontalAlignment.CENTER);
+    body.appendParagraph(examDates[examDates.length-1]).setAlignment(DocumentApp.HorizontalAlignment.RIGHT);
+    body.appendParagraph("\r");
+    var str = ""
+    for(j=0;j<examiners[i].length;j++){
+      
+      if (j == examiners[i].length - 1){
+        str = str + examiners[i][j];
+        }
+      if (j < examiners[i].length -1){
+        str = str + examiners[i][j] + ", ";
+        }
+      
+    }
+    body.appendParagraph(str+" has attended duty at K. A. P. Viswanatham Government Medical College,"+ 
+                         "Tiruchirapalli, in connection with conduct of I MBBS Physiology Practical and Oral Examinations "+
+                         "of the Tamil Nadu Dr. MGR Medical university, Chennai 32 held from "+
+                         examDates[0] + " to " + examDates[examDates.length -1]
+                        ).setAlignment(DocumentApp.HorizontalAlignment.JUSTIFY)
+    
+    body.appendParagraph("\n\n\n\n");
+    
+    body.appendParagraph("Chair Person of the Board,").setAlignment(DocumentApp.HorizontalAlignment.RIGHT)
+    body.appendParagraph("Board of examinations,").setAlignment(DocumentApp.HorizontalAlignment.RIGHT)
+    body.appendParagraph("I MBBS University exam,").setAlignment(DocumentApp.HorizontalAlignment.RIGHT);
+    body.appendParagraph("K. A. P. Viswanatham Government Medical College,").setAlignment(DocumentApp.HorizontalAlignment.RIGHT);
+    body.appendParagraph("Tiruchirapalli").setAlignment(DocumentApp.HorizontalAlignment.RIGHT)
+
+    body.appendPageBreak();
+    
+  }
+  
+  
+}
+
+
+//for BPT
+
+function createMinuteOfMeetingCumAttendanceBPT(){
+  var doc = DocumentApp.openById(createFile1());
+  var spreadsheet = SpreadsheetApp.openById("1dqngKjrX5r6CCnAYRXByTySScucZmyrGB80l1jL6aIQ");
+  var sheet =  spreadsheet.getSheetByName('UniversityFile');
+  
+  var name = doc.getName();
+  var body = doc.getBody();
+  
+  body.setMarginTop(20);
+  body.setMarginBottom(20);
+  
+  
+  var months = ["January","February","March","April","May","June","July","August","September","October","November","December"]
+  var examDates = getExamDates()[0];
+  var examDates1 = getExamDates()[1];
+  var candidates = getCandidatesOnEachDate();
+  
+  
+  var heading1 = body.appendParagraph((months[examDates1[0].getMonth()]+" "+examDates1[0].getFullYear()+" Examinations \n"));
+  heading1.setHeading((DocumentApp.ParagraphHeading.HEADING1));
+  heading1.setAlignment(DocumentApp.HorizontalAlignment.CENTER);
+  
+  var par1 = body.appendParagraph("Examination \t:\t FIRST BPT (ORAL) \n"+"Subject \t:\t Physiology \n"+"Center \t:\t KAPV Govt. Medical College, Tiruchirapalli");
+  
+  var heading2 = body.appendParagraph("Minutes Of The Meeting");
+  heading2.setHeading((DocumentApp.ParagraphHeading.HEADING2));
+  heading2.setAlignment(DocumentApp.HorizontalAlignment.CENTER);
+  
+  var par2 = body.appendParagraph("The Board meeting of Examiners of Physiology (Viva examinations) conducted on "+examDates[examDates.length - 1]+" at 4.00 pm at the Chamber of Professor of Physiology and Convener of the Board I year BPT, K. A. P. Viswanatham Government Medical College, Tiruchirapalli. As per the Tamil Nadu Dr. MGR Medical University, Chennai, I year BPT Oral Examinations were conducted. The mark sheets were duly signed by the board of examiners are herewith enclosed.")
+  par2.setAlignment(DocumentApp.HorizontalAlignment.JUSTIFY);
+  
+  var summaryCells = [["Date","No. Of Candidates","No. Present","No. Absent"]]
+  
+  for (i=0;i<examDates.length;i++){
+    var row = [];
+    row.push(examDates[i]);
+    row.push(candidates[i].length);
+    row.push("");
+    row.push("");
+    summaryCells.push(row);
+       }
+  
+  var table1 = body.appendTable(summaryCells);
+  
+  var examiners = getExaminerDetails();
+  
+  for(i=0;i<examiners.length;i++){
+    if (i==0){// to print "Convernor"
+      var par3 = body.appendParagraph("Convener: \r");
+      par3.setHeading(DocumentApp.ParagraphHeading.HEADING3).setSpacingAfter(0);
+      
+    }
+    if (i==1){// to print "Members"
+      var par4 = body.appendParagraph("Members: \r");
+      par4.setHeading(DocumentApp.ParagraphHeading.HEADING3);
+    }
+    for(j=0;j<examiners[i].length;j++){
+      body.appendParagraph(examiners[i][j]);
+      }
+    body.appendParagraph("\r").setSpacingAfter(0);
+    } 
+  
+  body.appendPageBreak();
+ 
+  // attendance certificates
+  
+  for(i=1;i<examiners.length;i++){
+    body.appendParagraph("KAPV Govt. Medical College, Tiruchirapalli").setHeading(DocumentApp.ParagraphHeading.HEADING1).setAlignment(DocumentApp.HorizontalAlignment.CENTER);
+    body.appendParagraph(examDates[examDates.length-1]).setAlignment(DocumentApp.HorizontalAlignment.RIGHT);
+    body.appendParagraph("\r");
+    var str = ""
+    for(j=0;j<examiners[i].length;j++){
+      
+      if (j == examiners[i].length - 1){
+        str = str + examiners[i][j];
+        }
+      if (j < examiners[i].length -1){
+        str = str + examiners[i][j] + ", ";
+        }
+      
+    }
+    body.appendParagraph(str+" has attended duty at K. A. P. Viswanatham Government Medical College,"+ 
+                         "Tiruchirapalli, in connection with conduct of BPT Oral Examinations "+
+                         "of the Tamil Nadu Dr. MGR Medical university, Chennai 32 held from "+
+                         examDates[0] + " to " + examDates[examDates.length -1]
+                        ).setAlignment(DocumentApp.HorizontalAlignment.JUSTIFY)
+    
+    body.appendParagraph("\n\n\n\n");
+    
+    body.appendParagraph("Chair Person of the Board,").setAlignment(DocumentApp.HorizontalAlignment.RIGHT)
+    body.appendParagraph("Board of examinations,").setAlignment(DocumentApp.HorizontalAlignment.RIGHT)
+    body.appendParagraph("BPT University exam,").setAlignment(DocumentApp.HorizontalAlignment.RIGHT);
+    body.appendParagraph("K. A. P. Viswanatham Government Medical College,").setAlignment(DocumentApp.HorizontalAlignment.RIGHT);
+    body.appendParagraph("Tiruchirapalli").setAlignment(DocumentApp.HorizontalAlignment.RIGHT)
+
+    body.appendPageBreak();
+    
+  }
+  
+  
+}
