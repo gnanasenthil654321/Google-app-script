@@ -1,0 +1,318 @@
+//Added a function to populate the control panel with existing sheet names on June 21 2020.
+//Get question from spreadsheet
+
+//Paste to a doc file
+
+//Create a doc file inside folder
+function createFile(){
+  var folder = DriveApp.getFolderById('1Fdns375sRXaOX0fYO35dkwIjuIvALNwW') // get the UniversityExam folder 0ByrroXF09PRHRVpZaDE0MjlycXM
+  var folderId = folder.getId();
+  Logger.log(folderId);
+  
+  var date = new Date();
+  var file = DocumentApp.create("MCQ_"+date.getFullYear()+(date.getMonth()+1)+date.getDay()+date.getMinutes());
+  Logger.log(file);
+  var fileId = DriveApp.getFileById(file.getId());
+  folder.addFile(fileId);
+  return file.getId();
+ }
+
+function getAQuestionFromSheet(rowNumber,fromSheet) {
+  //get the spreadsheet
+  
+  //get the sheet
+  
+  //get the question
+  
+  var spreadsheet = SpreadsheetApp.openById("1FCQNnyLmgSeDrEnLmqUKSSwLCa8Ta5TUJnkx20OJ_7s");
+  var sheet =  spreadsheet.getSheetByName(fromSheet);
+  var question = sheet.getRange(rowNumber,1,1,5).getValues();
+  Logger.log(question);
+  
+}
+
+function test(){
+  getAQuestionFromSheet(2,"General Physiology");
+}
+
+function getNumberOfQuestionsInEachSheet(){
+  var spreadsheet = SpreadsheetApp.openById("1FCQNnyLmgSeDrEnLmqUKSSwLCa8Ta5TUJnkx20OJ_7s");
+  var sheets = spreadsheet.getSheets();
+  var noOfQuestions = [];
+  for(i=0;i<sheets.length-1;i++){
+    var sheetName = spreadsheet.getSheetByName((sheets[i].getName()));
+    noOfQuestions.push(sheetName.getLastRow());
+  }
+  Logger.log(noOfQuestions);
+  return noOfQuestions;
+}
+
+function test_getNumberOfQuestionsInEachSheet(){
+  Logger.log(getNumberOfQuestionsInEachSheet());
+}
+
+function getRequirement(){
+  // to read sheet "ControlPanel"
+  var spreadsheet = SpreadsheetApp.openById("1FCQNnyLmgSeDrEnLmqUKSSwLCa8Ta5TUJnkx20OJ_7s");
+  var sheet =  spreadsheet.getSheetByName("ControlPanel");
+  var requirement = sheet.getRange(2,1,sheet.getLastRow()-1,2).getValues();
+  Logger.log((requirement));
+  return requirement;
+}
+
+function test_getRequirement(){
+  Logger.log(getRequirement()[5][1]);
+}
+
+function createArray(n){
+  var arr = [];
+  var i;
+  
+  for(i= 2;i<=n;i++){
+    arr.push((i));
+  }
+  //Logger.log(arr);
+  return arr;
+  //Logger.log(arr);
+}
+
+function test_3(){
+  var a = getNumberOfQuestionsInEachSheet();
+  var i;
+  for(i=0;i<a.length;i++){
+    Logger.log(i);
+    Logger.log(createArray(a[i]));
+  }
+}
+
+//shuffler
+function shuffle(array) {
+  var i;
+  for (i = array.length - 1; i > 0; i--) {
+    j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+  return array;
+}
+
+
+
+function test2(){
+  
+  Logger.log(shuffle(createArray(5.0)));
+  
+}
+
+
+
+function questionPicker(){
+  
+  var req = getRequirement(); // this will return a array of sheet and question required in sheet
+  Logger.log("req = %s",req);
+  var newArray = []
+  //Logger.log("Inside question Picker");
+  //Logger.log(req);
+  var presentQuestions = getNumberOfQuestionsInEachSheet(); // returns the last row of each sheet EXCEPT control panel
+  Logger.log("presentQuestions = %s",presentQuestions);
+  var questionArray = [];
+  //Logger.log("Hello");
+  //Logger.log(req.length);
+  var i;
+  for(i=0;i<req.length;i++){ // for every sheet
+    //Logger.log(i);
+    if(req[i][1] != 0 && presentQuestions[i] != 0){
+      //Logger.log(createArray(presentQuestions[i]));
+      //Logger.log("requiredQuestions=");Logger.log(req[i][1]);
+      var shuffledQuestions = shuffle(createArray(presentQuestions[i]));
+      var reqQuestions = shuffledQuestions.slice(0,req[i][1]);
+      //Logger.log(reqQuestions);
+      req[i].push(reqQuestions);
+      newArray.push(req[i]);
+      //newArray.push(createArray(presentQuestions[i]));
+      
+    }
+    //else{
+      //newArray.push(req[i]);
+      //newArray.push(createArray(presentQuestions[i]));
+    //}
+   
+  }
+  Logger.log(newArray);
+  return(newArray);
+}
+
+function getQuestionsFromSheet(questions){//given an array(return value from questionPicker), this will output array of questions
+  var spreadsheet = SpreadsheetApp.openById("1FCQNnyLmgSeDrEnLmqUKSSwLCa8Ta5TUJnkx20OJ_7s");
+  var sheet;
+  var i;
+  var pickedQuestions = [];
+  var answers = [];
+  var answersChoice = [];
+  
+  var questionAndAnswers = [];
+  for(i=0;i<questions.length;i++){
+    var sheet =  spreadsheet.getSheetByName(questions[i][0]);
+    var j;
+    var lastColumn = sheet.getLastColumn();
+    Logger.log("lastColumn is %s",lastColumn);
+    var correctAnsFontColor;
+    for(j=0;j<questions[i][2].length;j++){
+      pickedQuestions.push(sheet.getRange(questions[i][2][j], 1, 1, lastColumn).getValues());
+      correctAnsFontColor = (sheet.getRange(questions[i][2][j], 1, 1, lastColumn).getFontColors());
+      var k;
+      for(k=1;k<correctAnsFontColor[0].length;k++){
+        if(correctAnsFontColor[0][k] != '#000000'){
+          answersChoice.push(k);
+        }
+      }
+      answers.push(correctAnsFontColor);
+      
+          
+    }
+  }
+  //Logger.log(pickedQuestions);
+  //Logger.log(pickedQuestions.length);
+  
+  questionAndAnswers.push(pickedQuestions);
+  questionAndAnswers.push(answers);
+  questionAndAnswers.push(answersChoice);
+  Logger.log('questionAndAnswer[2]');
+  Logger.log(questionAndAnswers[1]);
+  Logger.log(questionAndAnswers[0].length);
+  Logger.log(questionAndAnswers[1].length);
+  Logger.log(questionAndAnswers[2].length);
+  return questionAndAnswers;
+}
+
+function test_getQuestionsFromSheet(){
+  getQuestionsFromSheet(questionPicker());
+}
+
+function addQuestionToDoc(questionAndAnswers){//input an array returned from getQuestionsFromSheet()
+  var doc = DocumentApp.openById(createFile());
+  var name = doc.getName();
+  var body = doc.getBody();
+  body.setMarginTop(20);
+  body.setMarginBottom(20);
+  
+  var questions = questionAndAnswers[0];
+  var answers = questionAndAnswers[1];
+  var correctAnswer = questionAndAnswers[2];
+  
+  var i;
+  for (i = 0;i < questions.length;i++){
+    body.appendParagraph(""+(i+1)+") "+questions[i][0][0]);
+    body.appendParagraph("");
+    
+    var j;
+    for(j=1;j<questions[i][0].length;j++){
+      body.appendParagraph("\t"+String.fromCharCode(j+64)+") "+questions[i][0][j]);
+        
+        }
+    body.appendParagraph("\n");
+   
+    Logger.log("correctAnswersAre");
+    Logger.log(correctAnswer);
+    
+     }
+}
+
+function createForm(){
+  var folder = DriveApp.getFolderById('1Fdns375sRXaOX0fYO35dkwIjuIvALNwW') // get the UniversityExam folder 0ByrroXF09PRHRVpZaDE0MjlycXM
+  var folderId = folder.getId();
+  Logger.log(folderId);
+  
+  var date = new Date();
+  var file = FormApp.create("MCQ_"+date.getFullYear()+(date.getMonth()+1)+date.getDate()+date.getMinutes());
+  var responseSheet = SpreadsheetApp.create("MCQ_ResponseSheet_"+date.getFullYear()+(date.getMonth()+1)+date.getDate()+date.getMinutes())
+  Logger.log(file);
+  var fileId = DriveApp.getFileById(file.getId());
+  folder.addFile(fileId);
+  
+  var responseSheetFileId = DriveApp.getFileById(responseSheet.getId());
+  folder.addFile(responseSheetFileId);
+  var formAndResponseId = [];
+  formAndResponseId.push(file.getId());
+  formAndResponseId.push(responseSheet.getId());
+  Logger.log('formAndResponseId %s',formAndResponseId);
+  return formAndResponseId;
+}
+
+function test_createForm(){
+  createForm();
+}
+
+function addQuestionToForm(questionAndAnswers){//input and array returned from getQuestionsFromSheet()
+  var formAndResponse = createForm();
+  var doc = FormApp.openById(formAndResponse[0]);
+  doc.setIsQuiz(true);
+  doc.setCollectEmail(true);
+  doc.setShuffleQuestions(true);
+  doc.setDestination(FormApp.DestinationType.SPREADSHEET, formAndResponse[1])
+  
+  //var name = doc.getName();
+  //var body = doc.getBody();
+  //body.setMarginTop(20);
+  //body.setMarginBottom(20);
+  
+  var questions = questionAndAnswers[0];
+  var answers = questionAndAnswers[1];
+  var correctAnswer = questionAndAnswers[2];
+  
+  var nameItem = doc.addTextItem();
+  nameItem.setTitle("Enter Your Name");
+  nameItem.setRequired(true);
+  
+  var rollNumItem = doc.addTextItem();
+  rollNumItem.setTitle("Enter Your Roll Number");
+  rollNumItem.setRequired(true);
+  
+  //var emailItem = doc.addTextItem();
+  //emailItem.setTitle("Enter Your Email Id");
+  //emailItem.setRequired(true);
+  
+  var i;
+  for (i = 0;i < questions.length;i++){
+    var item = doc.addMultipleChoiceItem();
+    var stem = item.setTitle(""+(i+1)+") "+questions[i][0][0]);
+    
+    var j;
+    var choi = [];//choices array
+    for(j=1;j<questions[i][0].length;j++){
+      //choi.push(questions[i][0][j]);
+      Logger.log("correctAnswer[i] %s",correctAnswer[i]);
+      Logger.log("j %s",j);
+      //Logger.log(correctAnswer[i]);
+      //Logger.log(j);
+      if(correctAnswer[i] == j){
+        choi.push(item.createChoice(questions[i][0][j],true));
+      }
+      else{
+        choi.push(item.createChoice(questions[i][0][j]));
+      }
+      
+        
+        }
+    Logger.log(choi);
+    item.setChoices(choi);
+    item.setPoints(1);
+    
+    
+    //Logger.log(questions[i][0]);
+    
+        
+     }
+  
+}
+
+function generateMCQForm(){
+  addQuestionToForm(getQuestionsFromSheet(questionPicker()));
+}
+
+function test_addQuestionToForm(){
+  addQuestionToForm(getQuestionsFromSheet(questionPicker()));
+}
+
+function test_addQuestionToDoc(){//use this function to generate MCQ question paper
+  addQuestionToDoc(getQuestionsFromSheet(questionPicker()));
+}
