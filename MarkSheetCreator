@@ -1,0 +1,368 @@
+//To get Practical marksheet - run createPracticalMarksheet
+//To get Viva Marksheet - run createVivaMarksheet
+//To get compile Marksheet - run createVivaAndPracticalMarksheet
+
+
+
+function createFile(name){// returns a file starting with given name
+  var folder = DriveApp.getFolderById('0ByrroXF09PRHRVpZaDE0MjlycXM') // get the UniversityExam folder
+  var folderId = folder.getId();
+  Logger.log(folderId);
+  var date = new Date();
+  
+  var file = DocumentApp.create(name+date.getFullYear()+(date.getMonth()+1)+date.getDay()+date.getMinutes());
+  var fileId = DriveApp.getFileById(file.getId());
+  folder.addFile(fileId);
+  return file.getId();
+ }
+
+function createPracticalMarksheet(){// creates a doc for Practical marksheet
+  var doc = DocumentApp.openById(createFile("PracMarksheet"));
+  var spreadsheet = SpreadsheetApp.openById("1dqngKjrX5r6CCnAYRXByTySScucZmyrGB80l1jL6aIQ");
+  var sheet =  spreadsheet.getSheetByName('UniversityFile');
+  
+  var name = doc.getName();
+  var body = doc.getBody();
+  
+  body.setMarginTop(20);
+  body.setMarginBottom(20);
+  
+  //for landscape mode
+  body.setPageWidth(841.88);
+  body.setPageHeight(595.276)
+  
+  
+  var months = ["January","February","March","April","May","June","July","August","September","October","November","December"]
+  var examDates = getExamDates()[0];
+  var examDates1 = getExamDates()[1];
+  var candidates = getCandidatesOnEachDate();
+  
+  
+   
+  //the table
+  
+  var tableHeading = ["Roll No.","Blood \r Minor (6)", "Blood \r Major (10)","Blood \r Total (16)","CNS \r(10)","CVS/RS \r(5)","Charts \r(5)","Clinical \r Total(20)","OSPE \r(4)","Grand Total (40)"]
+  
+  for(i=0;i<examDates.length;i++){// for every day    
+    
+    
+    
+    var numberOfStudents = candidates[i].length; // gives the number of candidates
+    
+    
+    // assumed that the maximum number of candidates is 25 per day
+    
+    // now decide how many pages to generate for a day with a maximum of 13 candidates per page
+    
+    
+    // split candidates into two 
+    
+    // candidates are even in number
+    
+    var candidates1 = candidates[i].slice(0,Math.ceil(numberOfStudents/2));
+    var candidates2 = candidates[i].slice(candidates1.length)
+    Logger.log(candidates[i].length-candidates1.length)
+    Logger.log(candidates1)
+    Logger.log(candidates2)
+    // floor and ceil will be the same if the number is even
+    for(j=1;j<=2;j++){
+      var tableCells = [];
+      var heading1 = body.appendParagraph((months[examDates1[0].getMonth()]+" "+examDates1[0].getFullYear()+" Examinations \n"));
+      heading1.setHeading((DocumentApp.ParagraphHeading.HEADING4));
+      heading1.setAlignment(DocumentApp.HorizontalAlignment.CENTER);
+      var date = body.appendParagraph(examDates[i]).setAlignment(DocumentApp.HorizontalAlignment.RIGHT)
+      tableCells.push(tableHeading);
+        
+      if(j==1){
+        var limitingValueFor_k = candidates1.length
+        var newCandidates = candidates1
+      }
+      if(j==2){
+        var limitingValueFor_k = candidates2.length
+        var newCandidates = candidates2
+      }
+        
+      for(k=0;k<limitingValueFor_k;k++){
+        var tableRow = [];
+        tableRow.push(newCandidates[k]);//push the roll number
+        // push empty columns
+        for(a=1;a<tableHeading.length;a++){
+          tableRow.push("");
+        }
+        tableCells.push(tableRow);
+          
+      }
+      body.appendTable(tableCells).setAttributes(style1());
+      
+      body.appendPageBreak();
+     
+    
+    }
+        
+  }
+  
+ 
+  
+}
+
+function createVivaMarksheet(){
+  var doc = DocumentApp.openById(createFile("VivaMarksheet"));
+  var spreadsheet = SpreadsheetApp.openById("1dqngKjrX5r6CCnAYRXByTySScucZmyrGB80l1jL6aIQ");
+  var sheet =  spreadsheet.getSheetByName('UniversityFile');
+  
+  var name = doc.getName();
+  var body = doc.getBody();
+  
+  body.setMarginTop(20);
+  body.setMarginBottom(20);
+  
+  
+  
+  var months = ["January","February","March","April","May","June","July","August","September","October","November","December"]
+  var examDates = getExamDates()[0];
+  var examDates1 = getExamDates()[1];
+  var candidates = getCandidatesOnEachDate();
+  
+  
+  
+  
+  //the table
+  
+  var tableHeading = ["Roll No.","I\r (6)","II\r(4)","III\r(4)","IV\r(6)","Total\r(20)"]
+  
+  for(i=0;i<examDates.length;i++){//for all days
+    var heading1 = body.appendParagraph((months[examDates1[0].getMonth()]+" "+examDates1[0].getFullYear()+" Examinations \n"));
+    heading1.setHeading((DocumentApp.ParagraphHeading.HEADING4));
+    heading1.setAlignment(DocumentApp.HorizontalAlignment.CENTER);
+    var date = body.appendParagraph(examDates[i]).setAlignment(DocumentApp.HorizontalAlignment.RIGHT)
+    var tableCells = [];
+    tableCells.push(tableHeading);
+    
+    for(j=0;j<candidates[i].length;j++){
+      var tableRow = [];
+      tableRow.push(candidates[i][j]);
+      for(k=0;k<tableHeading.length-1;k++){
+        tableRow.push("");
+      }
+      tableCells.push(tableRow);
+    }
+    body.appendTable(tableCells).setAttributes(style1());
+    //body.appendParagraph("I-GP,Blood,Muscle,GIT\t\t\t\tII-Endocrine,Reproduction,Renal").setHeading(DocumentApp.ParagraphHeading.HEADING6)
+    //body.appendParagraph("III-CVS,RS\t\t\t\tIV-CNS,Special Senses").setHeading(DocumentApp.ParagraphHeading.HEADING6);
+    body.appendPageBreak();    
+    
+  }
+  
+  
+}
+
+function createVivaMarksheetBPT(){
+  var doc = DocumentApp.openById(createFile("VivaMarksheet"));
+  var spreadsheet = SpreadsheetApp.openById("1dqngKjrX5r6CCnAYRXByTySScucZmyrGB80l1jL6aIQ");
+  var sheet =  spreadsheet.getSheetByName('UniversityFile');
+  
+  var name = doc.getName();
+  var body = doc.getBody();
+  
+  body.setMarginTop(20);
+  body.setMarginBottom(20);
+  
+  
+  
+  var months = ["January","February","March","April","May","June","July","August","September","October","November","December"]
+  var examDates = getExamDates()[0];
+  var examDates1 = getExamDates()[1];
+  var candidates = getCandidatesOnEachDate();
+  
+  
+  
+  
+  //the table
+  
+  var tableHeading = ["Roll No.","I\r (25)","II\r(25)","Total\r(50)"]
+  
+  for(i=0;i<examDates.length;i++){//for all days
+    var heading1 = body.appendParagraph((months[examDates1[0].getMonth()]+" "+examDates1[0].getFullYear()+" Examinations \n"));
+    heading1.setHeading((DocumentApp.ParagraphHeading.HEADING4));
+    heading1.setAlignment(DocumentApp.HorizontalAlignment.CENTER);
+    var date = body.appendParagraph(examDates[i]).setAlignment(DocumentApp.HorizontalAlignment.RIGHT)
+    var tableCells = [];
+    tableCells.push(tableHeading);
+    
+    for(j=0;j<candidates[i].length;j++){
+      var tableRow = [];
+      tableRow.push(candidates[i][j]);
+      for(k=0;k<tableHeading.length-1;k++){
+        tableRow.push("");
+      }
+      tableCells.push(tableRow);
+    }
+    body.appendTable(tableCells).setAttributes(style1());
+    //body.appendParagraph("I-GP,Blood,Muscle,GIT\t\t\t\tII-Endocrine,Reproduction,Renal").setHeading(DocumentApp.ParagraphHeading.HEADING6)
+    //body.appendParagraph("III-CVS,RS\t\t\t\tIV-CNS,Special Senses").setHeading(DocumentApp.ParagraphHeading.HEADING6);
+    body.appendPageBreak();    
+    
+  }
+  
+  
+}
+
+function createVivaAndPracticalMarksheet(){
+  var doc = DocumentApp.openById(createFile("VivaAndPracticalCompiledMarksheet"));
+  var spreadsheet = SpreadsheetApp.openById("1dqngKjrX5r6CCnAYRXByTySScucZmyrGB80l1jL6aIQ");
+  var sheet =  spreadsheet.getSheetByName('UniversityFile');
+  
+  var name = doc.getName();
+  var body = doc.getBody();
+  
+  body.setMarginTop(20);
+  body.setMarginBottom(20);
+  
+  
+  
+  var months = ["January","February","March","April","May","June","July","August","September","October","November","December"]
+  var examDates = getExamDates()[0];
+  var examDates1 = getExamDates()[1];
+  var candidates = getCandidatesOnEachDate();
+  
+   
+  //the table
+  
+  var tableHeading = ["Roll No.","Practical\r(40)","Viva\r(20)"]
+  
+  for(i=0;i<examDates.length;i++){
+    var heading1 = body.appendParagraph((months[examDates1[0].getMonth()]+" "+examDates1[0].getFullYear()+" Examinations \n"));
+    heading1.setHeading((DocumentApp.ParagraphHeading.HEADING4));
+    heading1.setAlignment(DocumentApp.HorizontalAlignment.CENTER);
+    var date = body.appendParagraph(examDates[i]).setAlignment(DocumentApp.HorizontalAlignment.RIGHT)
+    var tableCells = [];
+    tableCells.push(tableHeading);
+    
+    for(j=0;j<candidates[i].length;j++){
+      var tableRow = []
+      tableRow.push(candidates[i][j])
+      for(k=0;k<tableHeading.length-1;k++){
+        tableRow.push("");
+      }
+      tableCells.push(tableRow);
+    }
+    body.appendTable(tableCells).setAttributes(style1());
+    body.appendPageBreak(); 
+  }
+  
+}
+
+
+
+function createAttendanceSheet(){
+  var doc = DocumentApp.openById(createFile("AttendanceSheet"));
+  var spreadsheet = SpreadsheetApp.openById("1dqngKjrX5r6CCnAYRXByTySScucZmyrGB80l1jL6aIQ");
+  var sheet =  spreadsheet.getSheetByName('UniversityFile');
+  
+  var name = doc.getName();
+  var body = doc.getBody();
+  
+  body.setMarginTop(20);
+  body.setMarginBottom(20);
+  
+  
+  
+  var months = ["January","February","March","April","May","June","July","August","September","October","November","December"]
+  var examDates = getExamDates()[0];
+  var examDates1 = getExamDates()[1];
+  var candidates = getCandidatesOnEachDate();
+  
+   
+  //the table
+  
+  var tableHeading = ["Roll No.","Practical","Viva"]
+  
+  for(i=0;i<examDates.length;i++){
+    var heading1 = body.appendParagraph((months[examDates1[0].getMonth()]+" "+examDates1[0].getFullYear()+" Examinations \n"));
+    heading1.setHeading((DocumentApp.ParagraphHeading.HEADING4));
+    heading1.setAlignment(DocumentApp.HorizontalAlignment.CENTER);
+    var date = body.appendParagraph(examDates[i]).setAlignment(DocumentApp.HorizontalAlignment.RIGHT)
+    var tableCells = [];
+    tableCells.push(tableHeading);
+    
+    for(j=0;j<candidates[i].length;j++){
+      var tableRow = []
+      tableRow.push(candidates[i][j])
+      for(k=0;k<tableHeading.length-1;k++){
+        tableRow.push("");
+      }
+      tableCells.push(tableRow);
+    }
+    body.appendTable(tableCells).setAttributes(style1());
+    body.appendPageBreak(); 
+  }
+  
+}
+
+// BPT attendance sheet
+function createAttendanceSheetBPT(){
+  var doc = DocumentApp.openById(createFile("AttendanceSheet"));
+  var spreadsheet = SpreadsheetApp.openById("1dqngKjrX5r6CCnAYRXByTySScucZmyrGB80l1jL6aIQ");
+  var sheet =  spreadsheet.getSheetByName('UniversityFile');
+  
+  var name = doc.getName();
+  var body = doc.getBody();
+  
+  body.setMarginTop(20);
+  body.setMarginBottom(20);
+  
+  
+  
+  var months = ["January","February","March","April","May","June","July","August","September","October","November","December"]
+  var examDates = getExamDates()[0];
+  var examDates1 = getExamDates()[1];
+  var candidates = getCandidatesOnEachDate();
+  
+   
+  //the table
+  
+  var tableHeading = ["Roll No.","Viva"]
+  
+  for(i=0;i<examDates.length;i++){
+    var heading1 = body.appendParagraph((months[examDates1[0].getMonth()]+" "+examDates1[0].getFullYear()+" Examinations \n"));
+    heading1.setHeading((DocumentApp.ParagraphHeading.HEADING4));
+    heading1.setAlignment(DocumentApp.HorizontalAlignment.CENTER);
+    var date = body.appendParagraph(examDates[i]).setAlignment(DocumentApp.HorizontalAlignment.RIGHT)
+    var tableCells = [];
+    tableCells.push(tableHeading);
+    
+    for(j=0;j<candidates[i].length;j++){
+      var tableRow = []
+      tableRow.push(candidates[i][j])
+      for(k=0;k<tableHeading.length-1;k++){
+        tableRow.push("");
+      }
+      tableCells.push(tableRow);
+    }
+    body.appendTable(tableCells).setAttributes(style1());
+    body.appendPageBreak(); 
+  }
+  
+}
+
+
+function combinedSheets(){
+  createAttendanceSheet();
+  createVivaAndPracticalMarksheet();
+  createVivaMarksheet();
+  createPracticalMarksheet();
+}
+
+
+function combinedSheetsBPT(){
+  createAttendanceSheetBPT();
+  createVivaMarksheetBPT();
+}
+
+
+function test(){
+ var months = ["January","February","March","April","May","June","July","August","September","October","November","December"]
+ var x = months.slice(0,3);
+  Logger.log(x)
+  
+}
